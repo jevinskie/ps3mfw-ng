@@ -1,23 +1,9 @@
 import importlib.resources
-from contextlib import contextmanager
-from http.server import ThreadingHTTPServer
-import threading
 
-from .http_ranges_server import RangeHTTPRequestHandler
+from .http_ranges_server import http_server
 
 from ps3mfw.io import HTTPFile
 from ps3mfw.pup import PUP
-
-@contextmanager
-def http_server(server_class=ThreadingHTTPServer, handler_class=RangeHTTPRequestHandler):
-    server_address = ('', 38080)
-    httpd = server_class(server_address, handler_class)
-    try:
-        threading.Thread(target = lambda: httpd.serve_forever()).start()
-        yield
-    finally:
-        httpd.shutdown()
-    print("done serving")
 
 def test_pup():
     with http_server():

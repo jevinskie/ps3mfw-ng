@@ -1,6 +1,8 @@
 # https://gist.github.com/shivakar/82ac5c9cb17c95500db1906600e5e1ea
 
-from http.server import SimpleHTTPRequestHandler
+from contextlib import contextmanager
+from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
+import threading
 import os
 
 class RangeHTTPRequestHandler(SimpleHTTPRequestHandler):
@@ -106,3 +108,14 @@ class RangeHTTPRequestHandler(SimpleHTTPRequestHandler):
 
     def log_message(self, format: str, *args) -> None:
         pass
+
+
+@contextmanager
+def http_server(server_class=ThreadingHTTPServer, handler_class=RangeHTTPRequestHandler):
+    server_address = ('', 38080)
+    httpd = server_class(server_address, handler_class)
+    try:
+        threading.Thread(target = lambda: httpd.serve_forever()).start()
+        yield
+    finally:
+        httpd.shutdown()
