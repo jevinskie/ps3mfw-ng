@@ -103,7 +103,7 @@ class HTTPFile(FancyRawIOBase):
     _sz: Final[int] = field(init=False)
 
     def __attrs_post_init__(self) -> None:
-        head_r = self._ses.head(self.url)
+        head_r = self._ses.head(self.url, allow_redirects=True)
         self._sz = int(head_r.headers["Content-Length"])
 
     def read(self, size: int = -1) -> bytes:
