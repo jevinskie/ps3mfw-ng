@@ -8,6 +8,7 @@ import os
 class RangeHTTPRequestHandler(SimpleHTTPRequestHandler):
     """RangeHTTPRequestHandler is a SimpleHTTPRequestHandler
     with HTTP 'Range' support"""
+    quiet: bool = True
 
     def send_head(self):
         """Common code for GET and HEAD commands.
@@ -103,11 +104,15 @@ class RangeHTTPRequestHandler(SimpleHTTPRequestHandler):
             outfile.write(buf[:n])
             nbytes_left -= n
 
-    def log_request(self, code: int | str = ..., size: int | str = ...) -> None:
-        pass
+    def log_request(self, code='-', size='-') -> None:
+        if self.quiet:
+            return
+        super().log_request(code, size)
 
     def log_message(self, format: str, *args) -> None:
-        pass
+        if self.quiet:
+            return
+        super().log_message(format, *args)
 
 
 @contextmanager
