@@ -1,0 +1,7 @@
+#include "stdint.bt"
+
+struct PUPHeader {
+    u32 magic;
+};
+
+PUPHeader pup;
