@@ -34,6 +34,8 @@ untangle = "^1.1.1"
 typing-extensions = "^4.1.0"
 anytree = "^2.8.0"
 fusefs = "^0.0.2"
+nativetypes = "^1.0.4"
+pycryptodome = "^3.14.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.0.1"

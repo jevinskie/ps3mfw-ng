@@ -1,7 +1,15 @@
 #include "stdint.bt"
 
 struct PUPHeader {
-    u32 magic;
+    BigEndian();
+    u8 magic[7] <format=hex>;
+    u8 format_flag;
+    u64 package_version;
+    u64 image_version;
+    u64 segment_num;
+    u64 header_length <format=hex>;
+    u64 data_length <format=hex>;
+    LittleEndian();
 };
 
 PUPHeader pup;
