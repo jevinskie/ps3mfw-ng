@@ -4,15 +4,23 @@ from contextlib import nullcontext
 from .http_ranges_server import http_server
 
 from ps3mfw.io import HTTPFile
-from ps3mfw.pup import PUP
+from ps3mfw.pup import PUP, PUPFile
 
-def test_pup():
-    with http_server():
+def test_pup_struct_parse():
     # with nullcontext():
-        url = "https://archive.org/download/ps3updat-cex-3.55/ps3updat-cex-3.55.pup"
+    with http_server():
+        # url = "https://archive.org/download/ps3updat-cex-3.55/ps3updat-cex-3.55.pup"
         url = "http://localhost:38080/tests/ps3mfw/ps3updat-cex-3.55.pup"
         fh = HTTPFile(url)
         # pup_path = importlib.resources.files(__package__) / "ps3updat-cex-3.55.pup"
         # fh = open(pup_path, 'rb')
         pup = PUP.parse_stream(fh)
-        print(pup)
+        assert pup.header.data_length == 0xAA9_A440
+        assert bytes(pup.header_digest.digest) == bytes.fromhex("9CBC7D85CEAF24B16BFAA360F03AA0005681EA4D")
+
+def test_pupfile():
+    with http_server():
+        url = "http://localhost:38080/tests/ps3mfw/ps3updat-cex-3.55.pup"
+        fh = HTTPFile(url)
+        pupf = PUPFile(fh)
+        print(pupf.pup)
