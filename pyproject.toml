@@ -1,0 +1,50 @@
+[tool.poetry]
+name = "ps3mfw"
+version = "0.1.0"
+description = "ps3mfw-ng - PS3 Modified Firmware Builder - Next Generation"
+authors = ["Jevin Sweval <jevinsweval@gmail.com>"]
+
+[tool.poetry.scripts]
+ps3mfw-ng = 'ps3mfw.tools.ps3mfw:main'
+
+[tool.poetry.plugins."fs.opener"]
+#"pup" = "ps3mfw.pup:PUPFSOpener"
+
+[tool.poe.tasks]
+test = "pytest"
+test-v = "pytest -vvvv"
+test-vv = "pytest -vvvv --capture=tee-sys"
+ipy = "ipython"
+
+[tool.pytest.ini_options]
+addopts = "--import-mode=append"
+testpaths = [
+    "tests",
+]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+construct = "^2.10.67"
+rich = "^11.2.0"
+attrs = "^21.4.0"
+fs = "^2.4.15"
+requests = "^2.27.1"
+wrapt = "^1.13.3"
+untangle = "^1.1.1"
+typing-extensions = "^4.1.0"
+anytree = "^2.8.0"
+fusefs = "^0.0.2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.0.1"
+poethepoet = "^0.12.3"
+pytest-clarity = "^1.0.1"
+pytest-pycharm = "^0.7.0"
+pytest-randomly = "^3.11.0"
+pytest-cov = "^3.0.0"
+mypy = "^0.931"
+ipython = "^8.0.1"
+
+[build-system]
+requires = ["poetry-core @ git+https://github.com/jevinskie/poetry-core@jev/main"]
+build-backend = "poetry.core.masonry.api"
