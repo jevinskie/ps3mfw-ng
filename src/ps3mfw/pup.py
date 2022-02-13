@@ -1,31 +1,27 @@
-
 import bz2
 import enum
 import io
 import lzma
-from pathlib import Path
-from typing import Final, Optional, Collection, BinaryIO, Mapping
 import zlib
+from pathlib import Path
+from typing import BinaryIO, Collection, Final, Mapping, Optional
 
+import fs.opener.registry
+import untangle
 from anytree import RenderTree
 from attrs import define, field
+from construct import Mapping as ConstructMapping
+from construct import Optional as ConstructOptional
 from construct import *
-from construct import (
-    Optional as ConstructOptional,
-    Mapping as ConstructMapping,
-)
-from typing import Optional, Mapping
+from typing import Mapping, Optional
 from fs.base import FS
 from fs.enums import ResourceType
 from fs.errors import *
 from fs.info import Info
-from fs.permissions import Permissions
-from fs.subfs import SubFS
 from fs.opener.errors import *
 from fs.opener.parse import ParseResult
-import fs.opener.registry
-import untangle
-
+from fs.permissions import Permissions
+from fs.subfs import SubFS
 
 segid2name = {
     0x100: "version.txt",
@@ -42,6 +38,14 @@ segid2name = {
     0x601: "ps3swu2.self",
 }
 
+
+class SignAlgorithmEnum(enum.IntEnum):
+    hmac_sha1 = 0
+    hmac_sha256 = 1
+
+
+SignAlgorithm = Enum(Int32ub, SignAlgorithmEnum)
+
 PUPHeader = Struct(
     "magic" / Const(b"SCEUF\0\0"),
     "format_flag" / Byte,
@@ -50,4 +54,29 @@ PUPHeader = Struct(
     "segment_num" / Int64ub,
     "header_length" / Hex(Int64ub),
     "data_length" / Hex(Int64ub),
+)
+
+PUPSegmentEntry = Struct(
+    "id" / Int64ub,
+    "offset" / Hex(Int64ub),
+    "size" / Hex(Int64ub),
+    "sign_algorithm" / SignAlgorithm,
+    "padding" / Padding(4),
+)
+
+PUPDigestEntry = Struct(
+    "segment_index" / Int64ub,
+    "digest" / Hex(Byte[20]),
+    "padding" / Padding(4),
+)
+
+PUPHeaderDigest = Struct(
+    "digest" / Hex(Byte[20]),
+)
+
+PUP = Struct(
+    "header" / PUPHeader,
+    "segment_table" / PUPSegmentEntry[this.header.segment_num],
+    "digest_table" / PUPDigestEntry[this.header.segment_num],
+    "header_digest" / PUPHeaderDigest,
 )

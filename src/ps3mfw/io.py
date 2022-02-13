@@ -105,12 +105,14 @@ class HTTPFile(FancyRawIOBase):
     def __attrs_post_init__(self) -> None:
         head_r = self._ses.head(self.url, allow_redirects=True)
         self._sz = int(head_r.headers["Content-Length"])
+        assert "accept-ranges" in head_r.headers and "bytes" in head_r.headers["Accept-Ranges"]
 
     def read(self, size: int = -1) -> bytes:
         if size == -1:
             size = self._sz - self._idx
         if self._idx + size > self._sz:
             raise ValueError("out of bounds size")
+        print(f"bytes={self._idx}-{self._idx + size - 1}")
         buf = self._ses.get(self.url, headers={"Range": f"bytes={self._idx}-{self._idx + size - 1}"}).content
         assert len(buf) == size
         self._idx += size
