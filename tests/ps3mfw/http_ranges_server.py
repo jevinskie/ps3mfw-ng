@@ -107,6 +107,8 @@ class RangeHTTPRequestHandler(SimpleHTTPRequestHandler):
     def log_request(self, code='-', size='-') -> None:
         if self.quiet:
             return
+        if "Range" in self.headers:
+            size += f" Range: {self.headers['Range']}"
         super().log_request(code, size)
 
     def log_message(self, format: str, *args) -> None:

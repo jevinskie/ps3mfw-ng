@@ -1,5 +1,7 @@
+from array import array
 from contextlib import contextmanager
 import io
+import mmap
 from typing import Final, Optional
 from typing_extensions import Self
 
@@ -7,6 +9,7 @@ from attrs import define, field
 import requests
 from wrapt import ObjectProxy
 
+from .util import round_up, round_down
 
 class SubscriptedIOBaseMixin:
     sz: int
@@ -98,25 +101,52 @@ class OffsetRawIOBase(SubscriptedIOBaseMixin, SeekContextIOBaseMixin):
 @define
 class HTTPFile(FancyRawIOBase):
     url: Final[str]
+    blksz: Final[int] = 256 * 1024
     _ses: Final[requests.Session] = field(init=False, default=requests.Session())
     _idx: int = field(init=False, default=0)
     _sz: Final[int] = field(init=False)
+    _cache: Final[mmap.mmap] = field(init=False)
+    _cache_blkmap: Final[array] = field(init=False)
 
     def __attrs_post_init__(self) -> None:
         head_r = self._ses.head(self.url, allow_redirects=True)
-        self._sz = int(head_r.headers["Content-Length"])
         assert "accept-ranges" in head_r.headers and "bytes" in head_r.headers["Accept-Ranges"]
+        self._sz = int(head_r.headers["Content-Length"])
+        self._cache = mmap.mmap(-1, self._sz)
+        self._cache_blkmap = array('Q')
+        self._cache_blkmap.extend([0 for i in range(round_up(self._sz, self.blksz) // self.blksz)])
+
+    def _is_cached(self, byte_off: int) -> bool:
+        packed = self._cache_blkmap[byte_off // self.blksz // self._cache_blkmap.itemsize]
+        bit_idx = byte_off % (self._cache_blkmap.itemsize * 8)
+        return packed & (1 << bit_idx) != 0
+
+    def _mark_cached(self, byte_off: int) -> None:
+        packed = self._cache_blkmap[byte_off // self.blksz // self._cache_blkmap.itemsize]
+        bit_idx = byte_off % (self._cache_blkmap.itemsize * 8)
+        packed |= 1 << bit_idx
+        self._cache_blkmap[byte_off // self.blksz // self._cache_blkmap.itemsize] = packed
 
     def read(self, size: int = -1) -> bytes:
         if size == -1:
             size = self._sz - self._idx
         if self._idx + size > self._sz:
             raise ValueError("out of bounds size")
-        print(f"bytes={self._idx}-{self._idx + size - 1}")
-        buf = self._ses.get(self.url, headers={"Range": f"bytes={self._idx}-{self._idx + size - 1}"}).content
-        assert len(buf) == size
+        blk_byte_start, blk_byte_end = round_down(self._idx, self.blksz), round_up(self._idx + size, self.blksz)
+        blk_byte_sz = blk_byte_end - blk_byte_start
+        blk_start, blk_end = blk_byte_start // self.blksz, blk_byte_end // self.blksz
+        # FIXME: coalesce uncached regions and fetch in a single request
+        for blk in range(blk_start, blk_end):
+            if self._is_cached(blk * self.blksz):
+                continue
+            range_str = f"bytes={blk * self.blksz}-{(blk + 1) * self.blksz - 1}"
+            cache_fill_buf = self._ses.get(self.url, headers={"Range": range_str}).content
+            assert len(cache_fill_buf) == self.blksz
+            self._cache[blk * self.blksz:(blk + 1) * self.blksz] = cache_fill_buf
+            self._mark_cached(blk * self.blksz)
+        res = self._cache[self._idx:self._idx + size]
         self._idx += size
-        return buf
+        return res
 
     def tell(self) -> int:
         return self._idx
