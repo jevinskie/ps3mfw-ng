@@ -6,9 +6,10 @@ from attrs import define, field
 from construct import Mapping as ConstructMapping
 from construct import Optional as ConstructOptional
 from construct import *
-from typing import Mapping, Optional
 
 from .io import FancyRawIOBase
+
+from typing import Mapping, Optional  # isort:skip
 
 
 class SignAlgorithmEnum(enum.IntEnum):
@@ -54,6 +55,7 @@ CertFileHeader = Struct(
 CertFile = Struct(
     "header" / CertFileHeader,
 )
+
 
 @define
 class CertifiedFile:

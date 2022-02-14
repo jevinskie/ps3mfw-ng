@@ -4,12 +4,13 @@ import importlib.resources
 from contextlib import nullcontext
 from pathlib import Path
 
-from .http_ranges_server import http_server
-
 from ps3mfw.io import HTTPFile
 from ps3mfw.pup import PUP, PUPFile
 
+from .http_ranges_server import http_server
+
 CWD = Path(__file__).parent
+
 
 def test_pup_struct_parse():
     # with nullcontext():
@@ -21,11 +22,14 @@ def test_pup_struct_parse():
         # fh = open(pup_path, 'rb')
         pup = PUP.parse_stream(fh)
         assert pup.header.data_length == 0xAA9_A440
-        assert bytes(pup.header_digest.digest) == bytes.fromhex("9CBC7D85CEAF24B16BFAA360F03AA0005681EA4D")
+        assert bytes(pup.header_digest.digest) == bytes.fromhex(
+            "9CBC7D85CEAF24B16BFAA360F03AA0005681EA4D"
+        )
+
 
 def test_pupfile():
     with http_server(directory=CWD):
-    # with nullcontext():
+        # with nullcontext():
         url = "http://localhost:38080/ps3updat-cex-3.55.pup"
         fh = HTTPFile(url)
         # pup_path = importlib.resources.files(__package__) / "ps3updat-cex-3.55.pup"
@@ -34,5 +38,5 @@ def test_pupfile():
         pupf.rootfs.dump()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     test_pupfile()

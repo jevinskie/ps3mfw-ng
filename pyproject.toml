@@ -46,6 +46,11 @@ pytest-randomly = "^3.11.0"
 pytest-cov = "^3.0.0"
 mypy = "^0.931"
 ipython = "^8.0.1"
+black = "^22.1.0"
+isort = "^5.10.1"
+
+[tool.isort]
+profile = "black"
 
 [build-system]
 requires = ["poetry-core @ git+https://github.com/jevinskie/poetry-core@jev/main"]

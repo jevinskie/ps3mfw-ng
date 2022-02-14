@@ -7,7 +7,6 @@ from attrs import define, field
 from construct import Mapping as ConstructMapping
 from construct import Optional as ConstructOptional
 from construct import *
-from typing import Mapping, Optional
 from fs.base import FS
 from fs.errors import *
 from fs.info import Info
@@ -16,8 +15,11 @@ from fs.opener.parse import ParseResult
 from fs.permissions import Permissions
 from fs.subfs import SubFS
 
-from .io import FancyRawIOBase, OffsetRawIOBase, FancyRawIOBaseProxy
-from .fs import INode, DirEntType
+from .fs import DirEntType, INode
+from .io import FancyRawIOBase, FancyRawIOBaseProxy, OffsetRawIOBase
+
+from typing import Mapping, Optional  # isort:skip
+
 
 segid2filename = {
     0x100: "version.txt",
@@ -33,6 +35,7 @@ segid2filename = {
     0x501: "spkg_hdr.tar",
     0x601: "ps3swu2.self",
 }
+
 
 def get_seg_filename(segid):
     if segid in segid2filename:
@@ -82,6 +85,7 @@ PUP = Struct(
     "header_digest" / PUPHeaderDigest,
 )
 
+
 @define
 class PUPFile:
     fh: Final[FancyRawIOBase] = field(converter=FancyRawIOBaseProxy)
@@ -93,7 +97,13 @@ class PUPFile:
             self.pup = PUP.parse_stream(self.fh)
         self.rootfs = INode.root_node()
         for seg in self.pup.segment_table:
-            INode(name=get_seg_filename(seg.id), size=seg.size, type=DirEntType.REG, off=seg.offset, parent=self.rootfs)
+            INode(
+                name=get_seg_filename(seg.id),
+                size=seg.size,
+                type=DirEntType.REG,
+                off=seg.offset,
+                parent=self.rootfs,
+            )
 
 
 @define
@@ -108,8 +118,12 @@ class PUPFS(fs.base.FS):
         ino = self.pup.rootfs.lookup(path)
         if ino is None:
             raise ResourceNotFound(path)
-        return Info({"basic": {"name": ino.name, "is_dir": ino.is_dir},
-                     "details": {"type": ino.pyfs_type, "size": ino.size}})
+        return Info(
+            {
+                "basic": {"name": ino.name, "is_dir": ino.is_dir},
+                "details": {"type": ino.pyfs_type, "size": ino.size},
+            }
+        )
 
     def listdir(self, path: str) -> [str]:
         ino = self.pup.rootfs.lookup(path)
@@ -117,10 +131,17 @@ class PUPFS(fs.base.FS):
             raise ResourceNotFound(path)
         return [ino.name for ino in ino.children]
 
-    def makedir(self, path: str, permissions: Optional[Permissions] = None, recreate: bool = False) -> SubFS[FS]:
+    def makedir(
+        self,
+        path: str,
+        permissions: Optional[Permissions] = None,
+        recreate: bool = False,
+    ) -> SubFS[FS]:
         raise NotWriteable("PUP supports only reading")
 
-    def openbin(self, path: str, mode: str = "r", buffering: int = -1, **kwargs) -> BinaryIO:
+    def openbin(
+        self, path: str, mode: str = "r", buffering: int = -1, **kwargs
+    ) -> BinaryIO:
         if "r" not in mode:
             raise NotWriteable("PUP only supports reading")
         ino = self.pup.rootfs.lookup(path)
@@ -141,7 +162,14 @@ class PUPFS(fs.base.FS):
 class PUPFSOpener(fs.opener.Opener):
     protocols = ["pup"]
 
-    def open_fs(self, fs_url: str, parse_result: ParseResult, writeable: bool, create: bool, cwd: str):
+    def open_fs(
+        self,
+        fs_url: str,
+        parse_result: ParseResult,
+        writeable: bool,
+        create: bool,
+        cwd: str,
+    ):
         if create or writeable:
             # FIXME
             raise NotWriteable("PUP supports only reading")
