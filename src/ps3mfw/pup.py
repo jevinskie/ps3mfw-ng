@@ -104,14 +104,20 @@ PUP = Struct(
 #     def parse_stream(self, stream, **contextkw):
 #         raise NotImplementedError
 
-# PUP = wrapt.ObjectProxy(PUP)
+# PUP2 = wrapt.ObjectProxy(PUP)
 
+class PUP2(type(PUP)):
+    # def __new__(cls, *args, **kwargs):
+    #     return wrapt.ObjectProxy(PUP.__new__(*args, **kwargs))
+
+    def __init__(self, *args, **kwargs):
+        PUP.__init__(*args, **kwargs)
+        self = wrapt.ObjectProxy(self)
 
 # class PUP2(PUP):
 #     def __init__(self, *args, **kwargs):
 #         super(PUP, self).__init__(*args, **kwargs)
 
-# PUP2 = PUP
 
 # class PUP2(wrapt.ObjectProxy, PUP):
 #     def parse_stream(self, stream, **contextkw):
@@ -123,12 +129,12 @@ PUP = Struct(
 @define
 class PUPFile:
     fh: Final[FancyRawIOBase] = field(converter=FancyRawIOBase)
-    pup: PUP = field(init=False)
+    pup: PUP2 = field(init=False)
     rootfs: Final[INode] = field(init=False)
 
     def __attrs_post_init__(self):
         with self.fh.seek_ctx(0):
-            self.pup = PUP.parse_stream(self.fh)
+            self.pup = PUP2.parse_stream(self.fh)
         print(f"pup: {self.pup.header}")
         print(f"pup: {self.pup.rootfs}")
 
