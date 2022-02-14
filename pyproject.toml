@@ -8,7 +8,7 @@ authors = ["Jevin Sweval <jevinsweval@gmail.com>"]
 ps3mfw-ng = 'ps3mfw.tools.ps3mfw:main'
 
 [tool.poetry.plugins."fs.opener"]
-#"pup" = "ps3mfw.pup:PUPFSOpener"
+"pup" = "ps3mfw.pup:PUPFSOpener"
 
 [tool.poe.tasks]
 test = "pytest"

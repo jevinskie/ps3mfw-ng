@@ -1,4 +1,5 @@
 import enum
+import io
 from typing import BinaryIO, Collection, Final, Mapping, Optional
 
 import fs.opener.registry
@@ -84,59 +85,18 @@ PUP = Struct(
     "header_digest" / PUPHeaderDigest,
 )
 
-# @wrapt.patch_function_wrapper("ps3mfw.pup", "PUP.parse_stream")
-# def PUP_parse_stream_patched(parse_stream, self, args, kwargs):
-#     r = parse_stream(*args, **kwargs)
-#     r.rootfs = INode.root_node()
-#     return r
-
-
-# class PUP(wrapt.ObjectProxy):
-#     # def __new__(cls, *args, **kwargs):
-#     #     return wrapt.ObjectProxy(wrapped=PUP, *args, *kwargs)
-#
-#     def __init__(self, *args, **kwargs):
-#         self = wrapt.ObjectProxy(wrapped=PUP)
-#         # new_self = wrapt.ObjectProxy(wrapped=PUP)
-#         # new_self.__init__(self, *args, *kwargs)
-#         # self = new_self
-#
-#     def parse_stream(self, stream, **contextkw):
-#         raise NotImplementedError
-
-# PUP2 = wrapt.ObjectProxy(PUP)
-
-class PUP2(type(PUP)):
-    # def __new__(cls, *args, **kwargs):
-    #     return wrapt.ObjectProxy(PUP.__new__(*args, **kwargs))
-
-    def __init__(self, *args, **kwargs):
-        PUP.__init__(*args, **kwargs)
-        self = wrapt.ObjectProxy(self)
-
-# class PUP2(PUP):
-#     def __init__(self, *args, **kwargs):
-#         super(PUP, self).__init__(*args, **kwargs)
-
-
-# class PUP2(wrapt.ObjectProxy, PUP):
-#     def parse_stream(self, stream, **contextkw):
-#         r = super().parse_stream(stream, **contextkw)
-#         r.rootfs = INode.root_node()
-#         return r
-
-
 @define
 class PUPFile:
     fh: Final[FancyRawIOBase] = field(converter=FancyRawIOBase)
-    pup: PUP2 = field(init=False)
+    pup: Final[Struct] = field(init=False)
     rootfs: Final[INode] = field(init=False)
 
     def __attrs_post_init__(self):
         with self.fh.seek_ctx(0):
-            self.pup = PUP2.parse_stream(self.fh)
-        print(f"pup: {self.pup.header}")
-        print(f"pup: {self.pup.rootfs}")
+            self.pup = PUP.parse_stream(self.fh)
+        self.rootfs = INode.root_node()
+        for seg in self.pup.segment_table:
+            INode(name=get_seg_filename(seg.id), size=seg.size, type=DirEntType.REG, parent=self.rootfs)
 
 
 @define

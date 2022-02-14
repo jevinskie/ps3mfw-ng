@@ -28,7 +28,7 @@ def test_pupfile():
         pup_path = importlib.resources.files(__package__) / "ps3updat-cex-3.55.pup"
         fh = open(pup_path, 'rb')
         pupf = PUPFile(fh)
-        print(pupf.pup)
+        pupf.rootfs.dump()
 
 
 if __name__ == '__main__':
