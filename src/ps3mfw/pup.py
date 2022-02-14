@@ -3,21 +3,18 @@ import io
 from typing import BinaryIO, Collection, Final, Mapping, Optional
 
 import fs.opener.registry
-from anytree import RenderTree
 from attrs import define, field
 from construct import Mapping as ConstructMapping
 from construct import Optional as ConstructOptional
 from construct import *
 from typing import Mapping, Optional
 from fs.base import FS
-from fs.enums import ResourceType
 from fs.errors import *
 from fs.info import Info
 from fs.opener.errors import *
 from fs.opener.parse import ParseResult
 from fs.permissions import Permissions
 from fs.subfs import SubFS
-import wrapt
 
 from .io import FancyRawIOBase, OffsetRawIOBase
 from .fs import INode, DirEntType
@@ -96,18 +93,18 @@ class PUPFile:
             self.pup = PUP.parse_stream(self.fh)
         self.rootfs = INode.root_node()
         for seg in self.pup.segment_table:
-            INode(name=get_seg_filename(seg.id), size=seg.size, type=DirEntType.REG, parent=self.rootfs)
+            INode(name=get_seg_filename(seg.id), size=seg.size, type=DirEntType.REG, off=seg.offset, parent=self.rootfs)
 
 
 @define
 class PUPFS(fs.base.FS):
-    file: Final[FancyRawIOBase]
+    fh: Final[FancyRawIOBase]
     pup: Final[PUPFile] = field(init=False)
 
     def __attrs_post_init__(self):
-        if not isinstance(self.file, BinaryIO):
-            self.file = FancyRawIOBase(io.FileIO(self.file, 'r'))
-        self.pup = PUPFile(self.file)
+        if not isinstance(self.fh, BinaryIO):
+            self.fh = FancyRawIOBase(io.FileIO(self.fh, 'r'))
+        self.pup = PUPFile(self.fh)
 
     def getinfo(self, path: str, namespaces: Optional[Collection[str]] = None) -> Info:
         ino = self.pup.rootfs.lookup(path)
@@ -126,7 +123,12 @@ class PUPFS(fs.base.FS):
         raise NotWriteable("PUP supports only reading")
 
     def openbin(self, path: str, mode: str = "r", buffering: int = -1, **kwargs) -> BinaryIO:
-        raise NotImplementedError
+        if mode != "r":
+            raise NotWriteable("PUP only supports reading")
+        ino = self.pup.rootfs.lookup(path)
+        if ino is None:
+            raise ResourceNotFound(path)
+        return OffsetRawIOBase(self.fh, off=ino.off, sz=ino.size)
 
     def remove(self, path: str) -> None:
         raise NotWriteable("PUP supports only reading")

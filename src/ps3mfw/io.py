@@ -45,7 +45,7 @@ class FancyRawIOBase(ObjectProxy, SubscriptedIOBaseMixin, SeekContextIOBaseMixin
 
 
 @define
-class OffsetRawIOBase(SubscriptedIOBaseMixin, SeekContextIOBaseMixin):
+class OffsetRawIOBase(io.RawIOBase, SubscriptedIOBaseMixin, SeekContextIOBaseMixin):
     fh: Final[FancyRawIOBase] = field(converter=FancyRawIOBase)
     off: Final[int] = 0
     sz: Final[int] = -1
@@ -64,8 +64,7 @@ class OffsetRawIOBase(SubscriptedIOBaseMixin, SeekContextIOBaseMixin):
     def read(self, size: int = -1) -> bytes:
         if size == -1:
             size = self.sz - self._idx
-        if self._idx + size > self.sz:
-            raise ValueError("out of bounds size")
+        size = min(self.sz - self._idx, size)
         with self.fh.seek_ctx(self.off + self._idx, io.SEEK_SET):
             buf = self.fh.read(size)
         self._idx += len(buf)

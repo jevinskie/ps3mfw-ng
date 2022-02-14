@@ -29,15 +29,17 @@ class INode(NodeMixin):
     type: Final[DirEntType]
     size: int
     size_comp: Optional[int]
+    off: Optional[int]
     _ino: Final[int]
 
     def __init__(self, name: str, type: Final[DirEntType], size: int = 0, size_comp: Optional[int] = None,
-                 parent: Self = None, children: Optional[List[Self]] = None):
+                 off: Optional[int] = None, parent: Self = None, children: Optional[List[Self]] = None):
         super().__init__()
         self.name = name
         self.type = type
         self.size = size
         self.size_comp = size_comp
+        self.off = off
         self.parent = parent
         if type == DirEntType.DIR:
             self.children = children if children else []
