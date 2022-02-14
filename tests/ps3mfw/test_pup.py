@@ -3,7 +3,7 @@
 import importlib.resources
 from contextlib import nullcontext
 
-from http_ranges_server import http_server
+from .http_ranges_server import http_server
 
 from ps3mfw.io import HTTPFile
 from ps3mfw.pup import PUP, PUPFile

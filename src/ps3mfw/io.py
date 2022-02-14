@@ -40,7 +40,7 @@ class SeekContextIOBaseMixin:
             self.seek(old_tell)
 
 
-class FancyRawIOBase(SubscriptedIOBaseMixin, SeekContextIOBaseMixin):
+class FancyRawIOBase(ObjectProxy, SubscriptedIOBaseMixin, SeekContextIOBaseMixin):
     pass
 
 
@@ -98,7 +98,7 @@ class OffsetRawIOBase(SubscriptedIOBaseMixin, SeekContextIOBaseMixin):
         return type(self)(self.fh, suboff, size, blksz)
 
 
-@define
+@define(slots=False)
 class HTTPFile(FancyRawIOBase):
     url: Final[str]
     blksz: Final[int] = 256 * 1024
