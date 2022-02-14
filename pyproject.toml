@@ -23,7 +23,7 @@ testpaths = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.9"
 construct = "^2.10.67"
 rich = "^11.2.0"
 attrs = "^21.4.0"

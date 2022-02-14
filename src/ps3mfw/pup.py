@@ -16,7 +16,7 @@ from fs.opener.parse import ParseResult
 from fs.permissions import Permissions
 from fs.subfs import SubFS
 
-from .io import FancyRawIOBase, OffsetRawIOBase
+from .io import FancyRawIOBase, OffsetRawIOBase, FancyRawIOBaseProxy
 from .fs import INode, DirEntType
 
 segid2filename = {
@@ -84,7 +84,7 @@ PUP = Struct(
 
 @define
 class PUPFile:
-    fh: Final[FancyRawIOBase] = field(converter=FancyRawIOBase)
+    fh: Final[FancyRawIOBase] = field(converter=FancyRawIOBaseProxy)
     pup: Final[Struct] = field(init=False)
     rootfs: Final[INode] = field(init=False)
 
@@ -98,12 +98,10 @@ class PUPFile:
 
 @define
 class PUPFS(fs.base.FS):
-    fh: Final[FancyRawIOBase]
+    fh: Final[FancyRawIOBase] = field(converter=FancyRawIOBaseProxy)
     pup: Final[PUPFile] = field(init=False)
 
     def __attrs_post_init__(self):
-        if not isinstance(self.fh, BinaryIO):
-            self.fh = FancyRawIOBase(io.FileIO(self.fh, 'r'))
         self.pup = PUPFile(self.fh)
 
     def getinfo(self, path: str, namespaces: Optional[Collection[str]] = None) -> Info:
@@ -123,7 +121,7 @@ class PUPFS(fs.base.FS):
         raise NotWriteable("PUP supports only reading")
 
     def openbin(self, path: str, mode: str = "r", buffering: int = -1, **kwargs) -> BinaryIO:
-        if mode != "r":
+        if "r" not in mode:
             raise NotWriteable("PUP only supports reading")
         ino = self.pup.rootfs.lookup(path)
         if ino is None:

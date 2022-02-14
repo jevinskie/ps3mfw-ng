@@ -40,13 +40,30 @@ class SeekContextIOBaseMixin:
             self.seek(old_tell)
 
 
-class FancyRawIOBase(ObjectProxy, SubscriptedIOBaseMixin, SeekContextIOBaseMixin):
-    pass
+class FancyRawIOBase(SubscriptedIOBaseMixin, SeekContextIOBaseMixin):
+    def __new__(cls, *args, **kwargs):
+        return super().__new__(cls)
 
+
+class FancyRawIOBaseProxy(ObjectProxy, FancyRawIOBase):
+    def __new__(cls, wrapped):
+        if isinstance(wrapped, FancyRawIOBase):
+            return wrapped
+        return super().__new__(cls)
+
+    def __init__(self, wrapped):
+        if isinstance(wrapped, io.BufferedReader):
+            super().__init__(wrapped.raw)
+        elif isinstance(wrapped, io.RawIOBase):
+            super().__init__(wrapped)
+        elif isinstance(wrapped, str):
+            super().__init__(io.FileIO(wrapped, 'r'))
+        else:
+            raise NotImplementedError
 
 @define
-class OffsetRawIOBase(io.RawIOBase, SubscriptedIOBaseMixin, SeekContextIOBaseMixin):
-    fh: Final[FancyRawIOBase] = field(converter=FancyRawIOBase)
+class OffsetRawIOBase(io.RawIOBase, FancyRawIOBase):
+    fh: Final[FancyRawIOBase] = field(converter=FancyRawIOBaseProxy)
     off: Final[int] = 0
     sz: Final[int] = -1
     blksz: Final[int] = 1
