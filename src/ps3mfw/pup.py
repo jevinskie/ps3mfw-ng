@@ -84,11 +84,34 @@ PUP = Struct(
     "header_digest" / PUPHeaderDigest,
 )
 
-@wrapt.patch_function_wrapper("ps3mfw.pup", "PUP.parse_stream")
-def PUP_parse_stream_patched(parse_stream, self, args, kwargs):
-    r = parse_stream(*args, **kwargs)
-    r.rootfs = INode.root_node()
-    return r
+# @wrapt.patch_function_wrapper("ps3mfw.pup", "PUP.parse_stream")
+# def PUP_parse_stream_patched(parse_stream, self, args, kwargs):
+#     r = parse_stream(*args, **kwargs)
+#     r.rootfs = INode.root_node()
+#     return r
+
+
+# class PUP(wrapt.ObjectProxy):
+#     # def __new__(cls, *args, **kwargs):
+#     #     return wrapt.ObjectProxy(wrapped=PUP, *args, *kwargs)
+#
+#     def __init__(self, *args, **kwargs):
+#         self = wrapt.ObjectProxy(wrapped=PUP)
+#         # new_self = wrapt.ObjectProxy(wrapped=PUP)
+#         # new_self.__init__(self, *args, *kwargs)
+#         # self = new_self
+#
+#     def parse_stream(self, stream, **contextkw):
+#         raise NotImplementedError
+
+# PUP = wrapt.ObjectProxy(PUP)
+
+
+# class PUP2(PUP):
+#     def __init__(self, *args, **kwargs):
+#         super(PUP, self).__init__(*args, **kwargs)
+
+# PUP2 = PUP
 
 # class PUP2(wrapt.ObjectProxy, PUP):
 #     def parse_stream(self, stream, **contextkw):
@@ -118,7 +141,7 @@ class PUPFS(fs.base.FS):
     def __attrs_post_init__(self):
         if not isinstance(self.file, BinaryIO):
             self.file = FancyRawIOBase(io.FileIO(self.file, 'r'))
-        self.pup = PUP(self.file)
+        self.pup = PUPFile(self.file)
 
     def getinfo(self, path: str, namespaces: Optional[Collection[str]] = None) -> Info:
         ino = self.pup.rootfs.lookup(path)

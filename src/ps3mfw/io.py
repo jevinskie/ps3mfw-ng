@@ -40,7 +40,7 @@ class SeekContextIOBaseMixin:
             self.seek(old_tell)
 
 
-class FancyRawIOBase(ObjectProxy, SubscriptedIOBaseMixin, SeekContextIOBaseMixin):
+class FancyRawIOBase(SubscriptedIOBaseMixin, SeekContextIOBaseMixin):
     pass
 
 
