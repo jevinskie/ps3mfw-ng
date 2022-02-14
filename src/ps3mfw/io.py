@@ -133,15 +133,19 @@ class HTTPFile(FancyRawIOBase):
         self._cache_blkmap.extend([0 for i in range(round_up(self._sz, self.blksz) // self.blksz)])
 
     def _is_cached(self, byte_off: int) -> bool:
-        packed = self._cache_blkmap[byte_off // self.blksz // self._cache_blkmap.itemsize]
+        packed = self._cache_blkmap[byte_off // self.blksz // self._cache_blkmap.itemsize // 8]
         bit_idx = byte_off % (self._cache_blkmap.itemsize * 8)
-        return packed & (1 << bit_idx) != 0
+        res = packed & (1 << bit_idx) != 0
+        print(f"_is_cached({byte_off}) = {res}")
+        return res
+
 
     def _mark_cached(self, byte_off: int) -> None:
-        packed = self._cache_blkmap[byte_off // self.blksz // self._cache_blkmap.itemsize]
+        print(f"_mark_cached({byte_off})")
+        packed = self._cache_blkmap[byte_off // self.blksz // self._cache_blkmap.itemsize // 8]
         bit_idx = byte_off % (self._cache_blkmap.itemsize * 8)
         packed |= 1 << bit_idx
-        self._cache_blkmap[byte_off // self.blksz // self._cache_blkmap.itemsize] = packed
+        self._cache_blkmap[byte_off // self.blksz // self._cache_blkmap.itemsize // 8] = packed
 
     def read(self, size: int = -1) -> bytes:
         if size == -1:
