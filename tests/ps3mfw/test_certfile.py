@@ -3,7 +3,7 @@ from contextlib import nullcontext
 from pathlib import Path
 
 from ps3mfw.certfile import CertFile
-from ps3mfw.io import HTTPFile
+from ps3mfw.io_extras import HTTPFile
 from ps3mfw.pup import PUPFS
 
 from .http_ranges_server import http_server

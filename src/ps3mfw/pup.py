@@ -16,7 +16,7 @@ from fs.permissions import Permissions
 from fs.subfs import SubFS
 
 from .fs import DirEntType, INode
-from .io import FancyRawIOBase, FancyRawIOBaseProxy, OffsetRawIOBase
+from .io_extras import FancyRawIOBase, FancyRawIOBaseProxy, OffsetRawIOBase
 
 from typing import Mapping, Optional  # isort:skip
 
@@ -44,8 +44,8 @@ def get_seg_filename(segid):
 
 
 class SignAlgorithmEnum(enum.IntEnum):
-    hmac_sha1 = 0
-    hmac_sha256 = 1
+    HMAC_SHA1 = 0
+    HMAC_SHA256 = 1
 
 
 SignAlgorithm = Enum(Int32ub, SignAlgorithmEnum)
@@ -70,12 +70,12 @@ PUPSegmentEntry = Struct(
 
 PUPDigestEntry = Struct(
     "segment_index" / Int64ub,
-    "digest" / Hex(Byte[20]),
+    "digest" / Hex(Bytes(20)),
     "padding" / Padding(4),
 )
 
 PUPHeaderDigest = Struct(
-    "digest" / Hex(Byte[20]),
+    "digest" / Hex(Bytes(20)),
 )
 
 PUP = Struct(

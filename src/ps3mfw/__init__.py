@@ -1,1 +1,1 @@
-from . import certfile, fs, io, keys, pup, tar, util
+from . import certfile, fs, io_extras, keys, pup, tar, util
