@@ -100,7 +100,7 @@ class OffsetRawIOBase(io.RawIOBase, FancyRawIOBase):
             parent_off += self._parent_end - self._end
         self._idx = parent_off - self.off
         if not (0 <= self._idx <= self.sz):
-            raise ValueError("out of bounds seek")
+            raise IndexError("out of bounds seek")
         return self._idx
 
     def subfile(self, offset: int, size: int = -1, blksz: Optional[int] = None) -> Self:
@@ -130,28 +130,26 @@ class HTTPFile(FancyRawIOBase):
         self._sz = int(head_r.headers["Content-Length"])
         self._cache = mmap.mmap(-1, self._sz)
         self._cache_blkmap = array('Q')
-        self._cache_blkmap.extend([0 for i in range(round_up(self._sz, self.blksz) // self.blksz)])
+        blkmap_num_words = round_up(self._sz, self.blksz) // self.blksz // self._cache_blkmap.itemsize // 8
+        self._cache_blkmap.extend([0 for i in range(blkmap_num_words)])
 
     def _is_cached(self, byte_off: int) -> bool:
-        packed = self._cache_blkmap[byte_off // self.blksz // self._cache_blkmap.itemsize // 8]
-        bit_idx = byte_off % (self._cache_blkmap.itemsize * 8)
-        res = packed & (1 << bit_idx) != 0
-        print(f"_is_cached({byte_off}) = {res}")
-        return res
+        word_idx = byte_off // self.blksz // self._cache_blkmap.itemsize // 8
+        packed = self._cache_blkmap[word_idx]
+        bit_idx = (byte_off // self.blksz) % (self._cache_blkmap.itemsize * 8)
+        return packed & (1 << bit_idx) != 0
 
 
     def _mark_cached(self, byte_off: int) -> None:
-        print(f"_mark_cached({byte_off})")
-        packed = self._cache_blkmap[byte_off // self.blksz // self._cache_blkmap.itemsize // 8]
-        bit_idx = byte_off % (self._cache_blkmap.itemsize * 8)
-        packed |= 1 << bit_idx
-        self._cache_blkmap[byte_off // self.blksz // self._cache_blkmap.itemsize // 8] = packed
+        word_idx = byte_off // self.blksz // self._cache_blkmap.itemsize // 8
+        bit_idx = (byte_off // self.blksz) % (self._cache_blkmap.itemsize * 8)
+        self._cache_blkmap[word_idx] |= 1 << bit_idx
 
     def read(self, size: int = -1) -> bytes:
         if size == -1:
             size = self._sz - self._idx
         if self._idx + size > self._sz:
-            raise ValueError("out of bounds size")
+            raise IndexError("out of bounds size")
         blk_byte_start, blk_byte_end = round_down(self._idx, self.blksz), round_up(self._idx + size, self.blksz)
         blk_byte_sz = blk_byte_end - blk_byte_start
         blk_start, blk_end = blk_byte_start // self.blksz, blk_byte_end // self.blksz
@@ -179,5 +177,5 @@ class HTTPFile(FancyRawIOBase):
         elif whence == io.SEEK_END:
             self._idx = self._sz
         if not (0 <= self._idx <= self._sz):
-            raise ValueError("out of bounds seek")
+            raise IndexError("out of bounds seek")
         return self._idx
