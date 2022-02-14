@@ -34,8 +34,6 @@ class SubscriptedIOBaseMixin:
 class SeekContextIOBaseMixin:
     @contextmanager
     def seek_ctx(self, offset: int, whence: int = io.SEEK_SET) -> int:
-        # import pydevd
-        # pydevd.settrace()
         old_tell = self.tell()
         try:
             yield self.seek(offset, whence)
@@ -54,7 +52,9 @@ class FancyRawIOBaseProxy(ObjectProxy, FancyRawIOBase):
         return super().__new__(cls)
 
     def __init__(self, wrapped):
-        if isinstance(wrapped, io.BufferedReader):
+        if isinstance(wrapped, FancyRawIOBase):
+            return
+        elif isinstance(wrapped, io.BufferedReader):
             super().__init__(wrapped.raw)
         elif isinstance(wrapped, io.RawIOBase):
             super().__init__(wrapped)
