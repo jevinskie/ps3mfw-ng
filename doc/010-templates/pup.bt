@@ -18,20 +18,20 @@ struct PUPSegmentEntry {
     u64 offset <format=hex>;
     u64 size <format=hex>;
     u32 sign_algorithm;
-    u32 padding;
+    u32 padding <format=hex>;
     LittleEndian();
 };
 
 struct PUPDigestEntry {
     BigEndian();
     u64 segment_index;
-    u8 digest[20];
-    u32 padding;
+    u8 digest[20] <format=hex>;
+    u32 padding <format=hex>;
     LittleEndian();
 };
 
 struct PUPHeaderDigest {
-    u8 digest[20];
+    u8 digest[20] <format=hex>;
 };
 
 
@@ -41,7 +41,7 @@ struct PUP {
     PUPSegmentEntry segment_table[header.segment_num];
     PUPDigestEntry digest_table[header.segment_num];
     PUPHeaderDigest header_digest;
-    u32 padding[3];
+    u32 padding[3] <format=hex>;
     LittleEndian();
 };
 

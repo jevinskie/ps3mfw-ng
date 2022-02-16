@@ -1,0 +1,60 @@
+#include "stdint.bt"
+
+BigEndian();
+enum <u16> Category {
+    SELF = 1,
+    SRVK = 2,
+    SPKG = 3,
+    SSPP = 4,
+};
+LittleEndian();
+
+struct CertFileHeader {
+    BigEndian();
+    u8 magic[4] <format=hex>;
+    u32 version;
+    u16 attrribute;
+    enum Category category;
+    u32 ext_header_size <format=hex>;
+    u64 file_offset <format=hex>;
+    u64 file_size <format=hex>;
+    LittleEndian();
+};
+
+struct EncryptionRootHeader {
+    BigEndian();
+    u8 key[16] <format=hex>;
+    u8 key_pad[16] <format=hex>;
+    u8 iv[16] <format=hex>;
+    u8 iv_pad[16] <format=hex>;
+    LittleEndian();
+};
+
+BigEndian();
+enum <u32> SignAlgorithm {
+    ECDSA160 = 1,
+    HMAC_SHA1 = 2,
+    SHA1 = 3,
+    RSA2048 = 5,
+};
+LittleEndian();
+
+struct CertificationHeader {
+    BigEndian();
+    u64 sign_offset <format=hex>;
+    enum SignAlgorithm sign_algorithm;
+    u32 cert_entry_num;
+    u32 attr_entry_num;
+    u32 optional_header_size <format=hex>;
+    u64 pad <format=hex>;
+    LittleEndian();
+};
+
+struct CertFile {
+    BigEndian();
+    CertFileHeader header;
+    EncryptionRootHeader enc_root_header;
+    LittleEndian();
+};
+
+CertFile cert_file;

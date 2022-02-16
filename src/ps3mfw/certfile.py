@@ -12,42 +12,6 @@ from .io_extras import FancyRawIOBase
 from typing import Mapping, Optional  # isort:skip
 
 
-class SignAlgorithmEnum(enum.IntEnum):
-    hmac_sha1 = 0
-    hmac_sha256 = 1
-
-
-SignAlgorithm = Enum(Int32ub, SignAlgorithmEnum)
-
-PUPHeader = Struct(
-    "magic" / Const(b"SCEUF\0\0"),
-    "format_flag" / Byte,
-    "package_version" / Int64ub,
-    "image_version" / Int64ub,
-    "segment_num" / Int64ub,
-    "header_length" / Hex(Int64ub),
-    "data_length" / Hex(Int64ub),
-)
-
-PUPSegmentEntry = Struct(
-    "id" / Int64ub,
-    "offset" / Hex(Int64ub),
-    "size" / Hex(Int64ub),
-    "sign_algorithm" / SignAlgorithm,
-    "padding" / Padding(4),
-)
-
-PUPDigestEntry = Struct(
-    "segment_index" / Int64ub,
-    "digest" / Hex(Byte[20]),
-    "padding" / Padding(4),
-)
-
-PUPHeaderDigest = Struct(
-    "digest" / Hex(Byte[20]),
-)
-
-
 class CategoryEnum(enum.IntEnum):
     SELF = 1
     SRVK = 2
@@ -87,7 +51,7 @@ SignAlgorithm = Enum(Int32ub, SignAlgorithmEnum)
 CertificationHeader = Struct(
     "sign_offset" / Int64ub,
     "sign_algorithm" / SignAlgorithm,
-    "cert_entry_number" / Int32ub,
+    "cert_entry_num" / Int32ub,
     "attr_entry_num" / Int32ub,
     "optional_header_size" / Int32ub,
     "pad" / Padding(8),

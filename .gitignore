@@ -10,3 +10,5 @@ fuse.xmsgs
 fuseRelaunch.cmd
 
 .python-version
+.vscode/
+tests/ps3mfw/default.spp
